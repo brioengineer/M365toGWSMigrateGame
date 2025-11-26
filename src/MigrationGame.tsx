@@ -10,39 +10,62 @@ type ScenarioStep = { id: string; text: string };
 type Scenario = { id: string; title: string; prompt: string; steps: ScenarioStep[]; correctOrder: string[]; tips?: string };
 type BadgeKey = "Speedster" | "PerfectRound" | "MigrationPro" | "ComebackKid" | "MatchMaster" | "QuizWhiz" | "ScenarioSage";
 
-/* Data */
+/* ---------- Config (tweakable) ---------- */
+const MATCH_COUNT = 8;   // pairs per round in Match
+const QUIZ_COUNT  = 10;  // questions per round in Quiz
+
+/* ---------- Data: Matches (expanded) ---------- */
 const APP_PAIRS: Pair[] = [
-  { left: "Word", right: "Docs", why: "Docs offers Suggesting mode for tracked changes." },
-  { left: "Excel", right: "Sheets", why: "Sheets supports real-time collaboration and Explore." },
-  { left: "PowerPoint", right: "Slides", why: "Slides integrates with Meet for live Q&A." },
-  { left: "Outlook", right: "Gmail", why: "Gmail uses labels vs. folders; powerful search operators." },
-  { left: "OneDrive", right: "Drive", why: "Drive manages sharing via Link & Access levels." },
-  { left: "Teams", right: "Meet/Chat", why: "Meet for video; Chat/Spaces for persistent rooms." },
-  { left: "SharePoint", right: "Shared Drives", why: "Team-owned storage with role-based access." },
-  { left: "OneNote", right: "Keep", why: "Keep for quick notes; Docs/Spaces for long-form." },
+  { left: "Word",            right: "Docs",              why: "Suggesting mode ≈ Track Changes." },
+  { left: "Excel",           right: "Sheets",            why: "Real-time collaboration & Explore." },
+  { left: "PowerPoint",      right: "Slides",            why: "Presenter tools + Q&A." },
+  { left: "Outlook",         right: "Gmail",             why: "Labels + powerful search operators." },
+  { left: "OneDrive",        right: "Drive",             why: "Personal storage; link sharing." },
+  { left: "Teams Meetings",  right: "Meet",              why: "Video meetings, recording, Q&A." },
+  { left: "Teams Chat",      right: "Chat/Spaces",       why: "DMs & persistent rooms." },
+  { left: "SharePoint",      right: "Shared Drives",     why: "Team-owned storage with roles." },
+  { left: "OneNote",         right: "Keep",              why: "Quick notes & reminders." },
+  { left: "Planner",         right: "Tasks in Spaces",   why: "Lightweight team task boards." },
+  { left: "Forms (Microsoft)", right: "Google Forms",    why: "Surveys & quizzes → Sheets." },
+  { left: "Visio",           right: "Drawings",          why: "Simple diagrams in Drive." },
+  { left: "Stream",          right: "Drive/Meet Recordings", why: "Recordings live in Drive." },
+  { left: "Sway",            right: "Sites",             why: "Lightweight web pages/sites." },
+  { left: "Power Automate",  right: "Apps Script",       why: "Automate Workspace via JS." },
+  { left: "Yammer/Communities", right: "Spaces/Groups",  why: "Topic/community collaboration." },
+  { left: "Project (basic)", right: "Sheets",            why: "Simple tracking/PM templates." },
 ];
 
+/* ---------- Data: Quiz (expanded) ---------- */
 const SHORTCUT_QA: QA[] = [
-  { q: "Send email (Gmail web)", choices: ["Ctrl+Enter", "Ctrl+S", "Alt+Enter", "Shift+Enter"], answer: "Ctrl+Enter", why: "Sends the email." },
-  { q: "Find in document (Docs)", choices: ["Ctrl+F", "Ctrl+K", "Ctrl+G", "Ctrl+H"], answer: "Ctrl+F", why: "Standard find." },
-  { q: "Insert link (Docs/Slides/Sheets)", choices: ["Ctrl+K", "Ctrl+L", "Ctrl+Shift+K", "Alt+K"], answer: "Ctrl+K", why: "Consistent across apps." },
-  { q: "Comment (Docs/Sheets/Slides)", choices: ["Ctrl+Alt+M", "Ctrl+M", "Alt+M", "Shift+M"], answer: "Ctrl+Alt+M", why: "Open comment dialog." },
-  { q: "Search mail (Gmail)", choices: ["/", "Ctrl+F", "Ctrl+K", ";"], answer: "/", why: "Focus the search box." },
-  { q: "Bold text (Docs/Sheets/Slides)", choices: ["Ctrl+B", "Ctrl+Shift+B", "Alt+B", "Ctrl+1"], answer: "Ctrl+B", why: "Same as M365." },
+  { q: "Send email (Gmail web)",                 choices: ["Ctrl+Enter","Ctrl+S","Alt+Enter","Shift+Enter"], answer: "Ctrl+Enter", why: "Sends message." },
+  { q: "Search focus (Gmail)",                   choices: ["/","Ctrl+F","Ctrl+K",";"],                      answer: "/",           why: "Jump to search." },
+  { q: "Compose new email (Gmail)",              choices: ["c","n","Ctrl+N","Shift+C"],                     answer: "c",           why: "Keyboard compose." },
+  { q: "Bold (Docs/Sheets/Slides)",              choices: ["Ctrl+B","Ctrl+Shift+B","Alt+B","Ctrl+1"],       answer: "Ctrl+B" },
+  { q: "Insert link (Docs/Slides/Sheets)",       choices: ["Ctrl+K","Ctrl+L","Ctrl+Shift+K","Alt+K"],       answer: "Ctrl+K" },
+  { q: "Find (Docs/Slides/Sheets)",              choices: ["Ctrl+F","Ctrl+G","Ctrl+H","Ctrl+K"],            answer: "Ctrl+F" },
+  { q: "Comment (Docs/Sheets/Slides)",           choices: ["Ctrl+Alt+M","Ctrl+M","Alt+M","Shift+M"],        answer: "Ctrl+Alt+M" },
+  { q: "Open link dialog in Gmail compose",      choices: ["Ctrl+K","Ctrl+Shift+K","/","Ctrl+L"],           answer: "Ctrl+K" },
+  { q: "Insert row above (Sheets)",              choices: ["Ctrl+Alt++","Ctrl+Shift+=","Alt+Shift+=","Ctrl+="], answer: "Ctrl+Alt++" },
+  { q: "Start presentation (Slides)",            choices: ["Ctrl+Enter","Ctrl+F5","Ctrl+Alt+P","Present (⌘/Ctrl+Enter)"], answer: "Ctrl+Enter" },
 ];
 
 const TERMINOLOGY_QA: QA[] = [
-  { q: "Folders in Outlook map best to what in Gmail?", choices: ["Labels", "Categories", "Spaces", "Filters"], answer: "Labels", why: "Messages can have multiple labels." },
-  { q: "Track Changes in Word maps to what in Docs?", choices: ["Suggesting", "Reviewing", "Markup", "Proposing"], answer: "Suggesting", why: "Record edits for acceptance." },
-  { q: "Where do team-owned files live?", choices: ["Shared Drives", "My Drive", "Shared with me", "Public"], answer: "Shared Drives", why: "Owned by the org." },
-  { q: "What replaces Distribution Lists for team chat?", choices: ["Spaces", "Groups", "Labels", "Rooms Only"], answer: "Spaces", why: "Persistent chat, files, tasks." },
+  { q: "Outlook folders map to what in Gmail?",  choices: ["Labels","Categories","Spaces","Filters"],        answer: "Labels" },
+  { q: "Word Track Changes maps to what in Docs?", choices: ["Suggesting","Reviewing","Markup","Proposing"], answer: "Suggesting" },
+  { q: "Team-owned files live in…",              choices: ["Shared Drives","My Drive","Shared with me","Public"], answer: "Shared Drives" },
+  { q: "Persistent team chat space in Google?",  choices: ["Spaces","Groups","Labels","Rooms Only"],         answer: "Spaces" },
+  { q: "Automations across Workspace built with…", choices: ["Apps Script","Flow","Shortcuts","Builder"],    answer: "Apps Script" },
+  { q: "Company intranet pages best fit…",       choices: ["Sites","Docs","Slides","Keep"],                  answer: "Sites" },
+  { q: "Meeting recording destination in Workspace?", choices: ["Drive","Meet Cloud","Photos","Calendar"],   answer: "Drive" },
+  { q: "Formal org email lists with posting rules?", choices: ["Google Groups","Spaces","Labels","Meet"],    answer: "Google Groups" },
 ];
 
+/* ---------- Data: Scenarios (expanded) ---------- */
 const SCENARIOS: Scenario[] = [
   {
     id: "share-comment",
-    title: "Share a file for comment-only",
-    prompt: "Arrange the steps:",
+    title: "Share a Docs file for comment-only",
+    prompt: "Give a teammate comment access (no editing). Arrange:",
     steps: [
       { id: "open-doc", text: "Open the Docs file" },
       { id: "share-btn", text: "Click Share" },
@@ -50,27 +73,87 @@ const SCENARIOS: Scenario[] = [
       { id: "set-commenter", text: "Set permission to Commenter" },
       { id: "send", text: "Send" },
     ],
-    correctOrder: ["open-doc", "share-btn", "add-email", "set-commenter", "send"],
-    tips: "Viewer cannot comment; Editor can edit.",
+    correctOrder: ["open-doc","share-btn","add-email","set-commenter","send"],
+    tips: "Viewer ≠ comments; Editor can edit.",
+  },
+  {
+    id: "share-editor",
+    title: "Share a Sheet for editor access",
+    prompt: "Let a teammate edit a Sheet safely:",
+    steps: [
+      { id: "open-sheet", text: "Open the Sheets file" },
+      { id: "share-btn", text: "Click Share" },
+      { id: "add-collab", text: "Add collaborator's email" },
+      { id: "set-editor", text: "Set permission to Editor" },
+      { id: "notify", text: "Optionally write a note" },
+      { id: "send", text: "Send" },
+    ],
+    correctOrder: ["open-sheet","share-btn","add-collab","set-editor","notify","send"],
+    tips: "Use Restricted link for tighter sharing.",
+  },
+  {
+    id: "create-space",
+    title: "Create a Space for a project",
+    prompt: "Stand up a team Space with tasks & files:",
+    steps: [
+      { id: "open-chat", text: "Open Chat" },
+      { id: "new-space", text: "Create a new Space" },
+      { id: "name-space", text: "Name the Space & set purpose" },
+      { id: "add-members", text: "Add members" },
+      { id: "pin-files", text: "Pin a key Drive folder" },
+      { id: "add-task", text: "Add first task list" },
+    ],
+    correctOrder: ["open-chat","new-space","name-space","add-members","pin-files","add-task"],
+    tips: "Use Space tasks for lightweight planning.",
+  },
+  {
+    id: "calendar-meet-record",
+    title: "Schedule Meet with recording enabled",
+    prompt: "Create an event with Meet + recording:",
+    steps: [
+      { id: "open-cal", text: "Open Calendar" },
+      { id: "create-event", text: "Create event" },
+      { id: "add-guests", text: "Add guests" },
+      { id: "add-meet", text: "Add a Google Meet" },
+      { id: "host-ctrl", text: "Open Host controls" },
+      { id: "toggle-record", text: "Enable recording (if available)" },
+      { id: "save", text: "Save" },
+    ],
+    correctOrder: ["open-cal","create-event","add-guests","add-meet","host-ctrl","toggle-record","save"],
+    tips: "Recording depends on edition & admin settings.",
+  },
+  {
+    id: "drive-shared",
+    title: "Move team files into a Shared Drive",
+    prompt: "Centralize ownership under the team:",
+    steps: [
+      { id: "open-drive", text: "Open Drive" },
+      { id: "new-sd", text: "Create a Shared Drive (or open existing)" },
+      { id: "check-perms", text: "Check Manager/Content Manager roles" },
+      { id: "move-files", text: "Move project folder into Shared Drive" },
+      { id: "verify-sharing", text: "Verify sharing settings" },
+    ],
+    correctOrder: ["open-drive","new-sd","check-perms","move-files","verify-sharing"],
+    tips: "Shared Drives prevent loss when members leave.",
   },
 ];
 
-/* Utils */
-function shuffle<T>(arr: T[]): T[] { const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+/* ---------- Utils ---------- */
+function shuffle<T>(arr: T[]): T[] { const a=[...arr]; for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
 function pickN<T>(arr:T[], n:number){ return shuffle(arr).slice(0,n); }
 function cls(...p:Array<string|boolean|undefined>){ return p.filter(Boolean).join(" "); }
 function formatTime(ms:number){ const s=Math.max(0,Math.floor(ms/1000)); const mm=String(Math.floor(s/60)).padStart(2,"0"); const ss=String(s%60).padStart(2,"0"); return `${mm}:${ss}`; }
 
 const store = {
-  get<T>(k:string,f:T):T{ try{const r=localStorage.getItem(k); return r?JSON.parse(r):f;}catch{return f;} },
-  set<T>(k:string,v:T){ try{localStorage.setItem(k,JSON.stringify(v));}catch{} }
+  get<T>(k:string,f:T):T{ try{ const r=localStorage.getItem(k); return r?JSON.parse(r):f; } catch { return f; } },
+  set<T>(k:string,v:T){ try{ localStorage.setItem(k,JSON.stringify(v)); } catch {} }
 };
 
-/* Small UI bits */
+/* ---------- Small UI ---------- */
 function Card({children,className}:{children:React.ReactNode;className?:string}){ return <div className={cls("rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4",className)}>{children}</div>; }
 function ModeButton({label,active,onClick}:{label:string;active?:boolean;onClick:()=>void}){ return <button onClick={onClick} className={cls("px-3 py-1 rounded-xl text-sm border", active?"bg-blue-600 text-white border-blue-600":"bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800")} aria-pressed={active}>{label}</button>; }
-function BadgeBar({badges}:{badges:BadgeKey[]}){ if(!badges.length) return null; const desc:Record<BadgeKey,string>={
-  Speedster:"Answered fast",PerfectRound:"No mistakes",MigrationPro:"80%+ in all modes",ComebackKid:"Bounced back",MatchMaster:"Match mode star",QuizWhiz:"Quiz champ",ScenarioSage:"Scenario solver"};
+function BadgeBar({badges}:{badges:BadgeKey[]}){ if(!badges.length) return null;
+  const desc:Record<BadgeKey,string>={Speedster:"Answered fast",PerfectRound:"No mistakes",MigrationPro:"80%+ in all modes",ComebackKid:"Bounced back",MatchMaster:"Match mode star",QuizWhiz:"Quiz champ",ScenarioSage:"Scenario solver"};
   return (<div className="flex flex-wrap items-center gap-2 py-2">{badges.map(b=>(<span key={b} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-amber-100 text-amber-900 dark:bg-amber-800/40 dark:text-amber-100 border border-amber-300/60"><span>🏅</span><span>{b}</span><span className="opacity-70">— {desc[b]}</span></span>))}</div>);
 }
 function Header({score,best,mode,onChangeMode,timeLeftMs,lives,badges}:{score:number;best:number;mode:Mode;onChangeMode:(m:Mode)=>void;timeLeftMs:number|null;lives:number;badges:BadgeKey[];}){
@@ -94,9 +177,9 @@ function Header({score,best,mode,onChangeMode,timeLeftMs,lives,badges}:{score:nu
   </header>);
 }
 
-/* Modes */
+/* ---------- Modes ---------- */
 function MatchMode({onResult,onRoundEnd}:{onResult:(d:number,c:boolean,why?:string)=>void;onRoundEnd:(s:{total:number;correct:number;avgMs:number})=>void;}){
-  const [pairs,setPairs]=useState<Pair[]>(()=>pickN(APP_PAIRS,6));
+  const [pairs,setPairs]=useState<Pair[]>(()=>pickN(APP_PAIRS, Math.min(MATCH_COUNT, APP_PAIRS.length)));
   const [left,right]=useMemo(()=>[pairs.map(p=>p.left), shuffle(pairs.map(p=>p.right))],[pairs]);
   const [selLeft,setSelLeft]=useState<string|null>(null);
   const [matched,setMatched]=useState<Record<string,string>>({});
@@ -107,14 +190,15 @@ function MatchMode({onResult,onRoundEnd}:{onResult:(d:number,c:boolean,why?:stri
     if(side==="L"){ setSelLeft(value); return; }
     if(!selLeft) return;
     const pair=pairs.find(p=>p.left===selLeft);
-    const correct=pair?.right===value;
+    const ok=pair?.right===value;
     const dt=Date.now()-t0; times.current.push(dt);
-    if(correct){ setMatched(m=>({...m,[selLeft]:value})); onResult(+10,true,pair?.why); } else { onResult(0,false,`Nope. ${selLeft} maps to ${pair?.right}.`); }
+    if(ok){ setMatched(m=>({...m,[selLeft]:value})); onResult(+10,true,pair?.why); } else { onResult(0,false,`Nope. ${selLeft} maps to ${pair?.right}.`); }
     setSelLeft(null); setT0(Date.now());
   };
   useEffect(()=>{ const total=pairs.length; const done=Object.keys(matched).length;
     if(done===total && total>0){ const avg=times.current.reduce((a,b)=>a+b,0)/Math.max(1,times.current.length);
-      onRoundEnd({total,correct:done,avgMs:avg}); setTimeout(()=>{ times.current=[]; setMatched({}); setPairs(pickN(APP_PAIRS,6)); },600); }
+      onRoundEnd({total,correct:done,avgMs:avg});
+      setTimeout(()=>{ times.current=[]; setMatched({}); setPairs(pickN(APP_PAIRS, Math.min(MATCH_COUNT, APP_PAIRS.length))); },600); }
   },[matched,pairs,onRoundEnd]);
   return (<div className="grid md:grid-cols-2 gap-4">
     <Card><h2 className="text-lg font-semibold mb-2">M365 Apps</h2><ul className="grid gap-2">{left.map(l=>(
@@ -129,7 +213,8 @@ function MatchMode({onResult,onRoundEnd}:{onResult:(d:number,c:boolean,why?:stri
 }
 
 function QuizMode({onResult,onRoundEnd}:{onResult:(d:number,c:boolean,why?:string)=>void;onRoundEnd:(s:{total:number;correct:number;avgMs:number})=>void;}){
-  const [questions,setQuestions]=useState<QA[]>(()=>shuffle([...SHORTCUT_QA,...TERMINOLOGY_QA]).slice(0,8));
+  const bank = useMemo(()=>shuffle([...SHORTCUT_QA, ...TERMINOLOGY_QA]),[]);
+  const [questions,setQuestions]=useState<QA[]>(()=>bank.slice(0, Math.min(QUIZ_COUNT, bank.length)));
   const [idx,setIdx]=useState(0);
   const [selected,setSelected]=useState<string|null>(null);
   const [lock,setLock]=useState(false);
@@ -145,7 +230,7 @@ function QuizMode({onResult,onRoundEnd}:{onResult:(d:number,c:boolean,why?:strin
     onResult(ok?+10:0,ok,ok?q.why:`Answer: ${q.answer}. ${q.why??""}`); };
   const next=()=>{ if(idx+1>=questions.length){ const avg=times.current.reduce((a,b)=>a+b,0)/Math.max(1,times.current.length);
       onRoundEnd({total:questions.length,correct:times.current.length,avgMs:avg});
-      setTimeout(()=>{ times.current=[]; setQuestions(shuffle([...SHORTCUT_QA,...TERMINOLOGY_QA]).slice(0,8)); setIdx(0); setSelected(null); setLock(false); setT0(Date.now()); setTimeLeft(20000); },600); return; }
+      setTimeout(()=>{ times.current=[]; const fresh=shuffle([...SHORTCUT_QA, ...TERMINOLOGY_QA]); setQuestions(fresh.slice(0, Math.min(QUIZ_COUNT, fresh.length))); setIdx(0); setSelected(null); setLock(false); setT0(Date.now()); setTimeLeft(20000); },600); return; }
     setIdx(i=>i+1); setSelected(null); setLock(false); setT0(Date.now()); setTimeLeft(20000); };
   return (<div className="grid gap-4">
     <Card>
@@ -160,20 +245,23 @@ function QuizMode({onResult,onRoundEnd}:{onResult:(d:number,c:boolean,why?:strin
         <button onClick={next} className="px-3 py-1 rounded-xl border bg-white hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800">{idx+1>=questions.length?"Finish Round":"Next"}</button>
       </div>
     </Card>
-    <Card><p className="text-sm opacity-75">Tip: Many shortcuts are shared with M365; focus on Gmail labels & Docs Suggesting.</p></Card>
+    <Card><p className="text-sm opacity-75">Tip: Many shortcuts are shared with M365; focus on Gmail labels, Meet, and Sites.</p></Card>
   </div>);
 }
 
 function ScenarioMode({onResult,onRoundEnd}:{onResult:(d:number,c:boolean,why?:string)=>void;onRoundEnd:(s:{total:number;correct:number;avgMs:number})=>void;}){
-  const scenario=SCENARIOS[0];
-  const [pool]=useState<ScenarioStep[]>(()=>shuffle(scenario.steps));
+  const [scenario,setScenario]=useState<Scenario>(()=>shuffle(SCENARIOS)[0]);
+  const [pool,setPool]=useState<ScenarioStep[]>(()=>shuffle(scenario.steps));
   const [order,setOrder]=useState<string[]>([]);
   const t0=useRef<number>(Date.now());
-  useEffect(()=>{ t0.current=Date.now(); },[]);
+  useEffect(()=>{ t0.current=Date.now(); },[scenario]);
   const add=(id:string)=>{ if(order.includes(id)) return; setOrder(o=>[...o,id]); };
   const remove=(id:string)=> setOrder(o=>o.filter(x=>x!==id));
   const submit=()=>{ const ok=JSON.stringify(order)===JSON.stringify(scenario.correctOrder); const dt=Date.now()-t0.current;
-    onResult(ok?+20:0,ok, ok?"Great sequencing!":`Correct: ${scenario.correctOrder.map(id=>scenario.steps.find(s=>s.id===id)?.text).join(" → ")}`); onRoundEnd({total:1,correct:ok?1:0,avgMs:dt}); setOrder([]); };
+    onResult(ok?+20:0,ok, ok?"Great sequencing!":`Correct: ${scenario.correctOrder.map(id=>scenario.steps.find(s=>s.id===id)?.text).join(" → ")}`);
+    onRoundEnd({total:1,correct:ok?1:0,avgMs:dt});
+    setTimeout(()=>{ const next=shuffle(SCENARIOS)[0]; setScenario(next); setPool(shuffle(next.steps)); setOrder([]); },600);
+  };
   return (<div className="grid gap-4">
     <Card>
       <h2 className="text-lg font-semibold mb-1">{scenario.title}</h2>
@@ -188,10 +276,16 @@ function ScenarioMode({onResult,onRoundEnd}:{onResult:(d:number,c:boolean,why?:s
         <div>
           <h3 className="text-sm font-semibold mb-2">Your Sequence</h3>
           <ol className="grid gap-2">{order.map((id,i)=>{ const step=scenario.steps.find(s=>s.id===id)!;
-            return (<li key={id} className="flex items-center gap-2"><span className="w-6 h-6 inline-flex items-center justify-center rounded-full border text-xs">{i+1}</span><span className="flex-1 px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700">{step.text}</span><button onClick={()=>remove(id)} className="px-2 py-1 text-xs rounded-lg border">Remove</button></li>);
+            return (<li key={id} className="flex items-center gap-2">
+              <span className="w-6 h-6 inline-flex items-center justify-center rounded-full border text-xs">{i+1}</span>
+              <span className="flex-1 px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700">{step.text}</span>
+              <button onClick={()=>remove(id)} className="px-2 py-1 text-xs rounded-lg border">Remove</button>
+            </li>);
           })}</ol>
-          <div className="mt-3 flex items-center justify-between"><div className="text-sm opacity-70">Pick steps in order; remove to adjust.</div>
-            <button onClick={submit} disabled={order.length!==scenario.correctOrder.length} className="px-3 py-1 rounded-xl border bg-white hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 disabled:opacity-50">Submit</button></div>
+          <div className="mt-3 flex items-center justify-between">
+            <div className="text-sm opacity-70">Pick steps in order; remove to adjust.</div>
+            <button onClick={submit} disabled={order.length!==scenario.correctOrder.length} className="px-3 py-1 rounded-xl border bg-white hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 disabled:opacity-50">Submit</button>
+          </div>
         </div>
       </div>
     </Card>
@@ -199,7 +293,7 @@ function ScenarioMode({onResult,onRoundEnd}:{onResult:(d:number,c:boolean,why?:s
   </div>);
 }
 
-/* Main */
+/* ---------- Main ---------- */
 export default function MigrationGame(){
   const [mode,setMode]=useState<Mode>(()=>store.get<Mode>("gw.mode","menu"));
   const [score,setScore]=useState(()=>store.get<number>("gw.score",0));
@@ -245,8 +339,8 @@ export default function MigrationGame(){
                 <p className="opacity-80 mb-3">Learn Google Workspace fast with mini-games designed for folks migrating from Microsoft 365.</p>
                 <ul className="list-disc ml-5 space-y-1 text-sm opacity-90">
                   <li><b>Match:</b> Pair Microsoft apps with their Google counterparts.</li>
-                  <li><b>Quiz:</b> Shortcuts, labels, suggesting mode.</li>
-                  <li><b>Scenarios:</b> Practical step-by-step tasks.</li>
+                  <li><b>Quiz:</b> Shortcuts, labels, suggesting mode, and more.</li>
+                  <li><b>Scenarios:</b> Practical step-by-step tasks you’ll do daily.</li>
                 </ul>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button onClick={()=>setMode("match")} className="px-4 py-2 rounded-xl border bg-white hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800">Start Match</button>
@@ -275,7 +369,7 @@ export default function MigrationGame(){
               </div>
               <div>
                 <h4 className="font-semibold mb-1">Quick Shortcuts</h4>
-                <ul className="grid gap-1">{SHORTCUT_QA.slice(0,4).map(s=>(
+                <ul className="grid gap-1">{SHORTCUT_QA.slice(0,6).map(s=>(
                   <li key={s.q} className="flex items-center justify-between px-3 py-2 rounded-lg border"><span>{s.q}</span><span className="font-medium">{s.answer}</span></li>
                 ))}</ul>
               </div>
